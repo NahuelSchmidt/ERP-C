@@ -1,0 +1,1425 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["public", "tenant"]
+}
+
+model Tenant {
+  id            String         @id @default(cuid())
+  slug          String         @unique
+  name          String
+  dbSchema      String         @unique
+  status        TenantStatus   @default(TRIAL)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  deletedAt     DateTime?
+  planId        String?
+  subscriptions Subscription[]
+  plan          Plan?          @relation(fields: [planId], references: [id])
+  users         TenantUser[]
+
+  @@schema("public")
+}
+
+model Plan {
+  id            String         @id @default(cuid())
+  name          String         @unique
+  description   String?
+  maxUsers      Int            @default(5)
+  maxProducts   Int            @default(500)
+  maxBranches   Int            @default(1)
+  features      Json           @default("[]")
+  priceMonthly  Decimal        @db.Decimal(10, 2)
+  priceAnnual   Decimal        @db.Decimal(10, 2)
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  subscriptions Subscription[]
+  tenants       Tenant[]
+
+  @@schema("public")
+}
+
+model Subscription {
+  id                 String       @id @default(cuid())
+  tenantId           String
+  planId             String
+  interval           PlanInterval
+  status             String
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelledAt        DateTime?
+  externalId         String?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  plan               Plan         @relation(fields: [planId], references: [id])
+  tenant             Tenant       @relation(fields: [tenantId], references: [id])
+
+  @@schema("public")
+}
+
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  passwordHash String
+  firstName    String?
+  lastName     String?
+  avatarUrl    String?
+  isActive     Boolean      @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  deletedAt    DateTime?
+  tenantUsers  TenantUser[]
+
+  @@schema("public")
+}
+
+model TenantUser {
+  id        String   @id @default(cuid())
+  tenantId  String
+  userId    String
+  roleId    String
+  isActive  Boolean  @default(true)
+  branchId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([tenantId, userId])
+  @@schema("public")
+}
+
+model Permission {
+  id          String  @id @default(cuid())
+  module      String
+  action      String
+  description String?
+
+  @@unique([module, action])
+  @@schema("public")
+}
+
+model TenantConfig {
+  id                String       @id @default(cuid())
+  companyName       String
+  tradeName         String?
+  documentType      DocumentType @default(CUIT)
+  documentNumber    String
+  vatCondition      VatCondition @default(RESPONSABLE_INSCRIPTO)
+  grossIncomeNumber String?
+  address           String?
+  city              String?
+  state             String?
+  country           String       @default("Argentina")
+  postalCode        String?
+  phone             String?
+  email             String?
+  website           String?
+  logoUrl           String?
+  primaryColor      String?      @default("#2563eb")
+  currency          String       @default("ARS")
+  timezone          String       @default("America/Argentina/Buenos_Aires")
+  dateFormat        String       @default("DD/MM/YYYY")
+  afipEnvironment   String?      @default("testing")
+  afipCertificate   String?
+  afipPrivateKey    String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@schema("tenant")
+}
+
+model Role {
+  id          String           @id @default(cuid())
+  tenantId    String
+  name        String
+  description String?
+  isDefault   Boolean          @default(false)
+  isSystem    Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  deletedAt   DateTime?
+  permissions RolePermission[]
+
+  @@unique([tenantId, name])
+  @@schema("tenant")
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@schema("tenant")
+}
+
+model Branch {
+  id            String         @id @default(cuid())
+  tenantId      String
+  name          String
+  address       String?
+  city          String?
+  phone         String?
+  email         String?
+  isMain        Boolean        @default(false)
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  deletedAt     DateTime?
+  cashRegisters CashRegister[]
+  pointsOfSale  PointOfSale[]
+  warehouses    Warehouse[]
+
+  @@unique([tenantId, name])
+  @@schema("tenant")
+}
+
+model Warehouse {
+  id               String            @id @default(cuid())
+  tenantId         String
+  branchId         String
+  name             String
+  description      String?
+  address          String?
+  isDefault        Boolean           @default(false)
+  isActive         Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  deletedAt        DateTime?
+  batches          Batch[]
+  purchaseReceipts PurchaseReceipt[]
+  serialNumbers    SerialNumber[]
+  stocks           Stock[]
+  stockMovements   StockMovement[]
+  branch           Branch            @relation(fields: [branchId], references: [id])
+
+  @@unique([tenantId, name])
+  @@schema("tenant")
+}
+
+model TaxRate {
+  id                 String              @id @default(cuid())
+  tenantId           String
+  name               String
+  type               TaxType
+  rate               Decimal             @db.Decimal(8, 6)
+  isDefault          Boolean             @default(false)
+  isActive           Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  invoiceItems       InvoiceItem[]
+  invoiceTaxes       InvoiceTax[]
+  purchaseOrderItems PurchaseOrderItem[]
+
+  @@unique([tenantId, name])
+  @@schema("tenant")
+}
+
+model PaymentCondition {
+  id          String     @id @default(cuid())
+  tenantId    String
+  name        String
+  days        Int        @default(0)
+  description String?
+  isDefault   Boolean    @default(false)
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  invoices    Invoice[]
+  suppliers   Supplier[]
+
+  @@unique([tenantId, name])
+  @@schema("tenant")
+}
+
+model UnitOfMeasure {
+  id           String    @id @default(cuid())
+  tenantId     String
+  name         String
+  abbreviation String
+  isBase       Boolean   @default(false)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  products     Product[]
+
+  @@unique([tenantId, abbreviation])
+  @@schema("tenant")
+}
+
+model CustomerCategory {
+  id        String     @id @default(cuid())
+  tenantId  String
+  name      String
+  color     String?    @default("#6366f1")
+  isActive  Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  customers Customer[]
+
+  @@unique([tenantId, name])
+  @@schema("tenant")
+}
+
+model Customer {
+  id                String                 @id @default(cuid())
+  tenantId          String
+  categoryId        String?
+  priceListId       String?
+  type              PersonType             @default(COMPANY)
+  firstName         String?
+  lastName          String?
+  companyName       String?
+  documentType      DocumentType           @default(CUIT)
+  documentNumber    String?
+  vatCondition      VatCondition           @default(CONSUMIDOR_FINAL)
+  grossIncomeNumber String?
+  creditLimit       Decimal?               @db.Decimal(12, 2)
+  currentBalance    Decimal                @default(0) @db.Decimal(12, 2)
+  phone             String?
+  email             String?
+  website           String?
+  notes             String?
+  isActive          Boolean                @default(true)
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  deletedAt         DateTime?
+  createdById       String?
+  updatedById       String?
+  checks            Check[]
+  category          CustomerCategory?      @relation(fields: [categoryId], references: [id])
+  priceList         PriceList?             @relation(fields: [priceListId], references: [id])
+  addresses         CustomerAddress[]
+  contacts          CustomerContact[]
+  specialPrices     CustomerSpecialPrice[]
+  invoices          Invoice[]
+  payments          Payment[]
+  saleOrders        SaleOrder[]
+
+  @@index([tenantId, documentNumber])
+  @@index([tenantId, companyName])
+  @@index([tenantId, isActive])
+  @@schema("tenant")
+}
+
+model CustomerAddress {
+  id         String      @id @default(cuid())
+  customerId String
+  type       AddressType @default(FISCAL)
+  street     String
+  number     String?
+  floor      String?
+  apartment  String?
+  city       String?
+  state      String?
+  postalCode String?
+  country    String      @default("Argentina")
+  isDefault  Boolean     @default(false)
+  notes      String?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  customer   Customer    @relation(fields: [customerId], references: [id])
+
+  @@schema("tenant")
+}
+
+model CustomerContact {
+  id         String   @id @default(cuid())
+  customerId String
+  name       String
+  role       String?
+  phone      String?
+  mobile     String?
+  email      String?
+  isPrimary  Boolean  @default(false)
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  @@schema("tenant")
+}
+
+model Supplier {
+  id                 String                   @id @default(cuid())
+  tenantId           String
+  type               PersonType               @default(COMPANY)
+  firstName          String?
+  lastName           String?
+  companyName        String?
+  documentType       DocumentType             @default(CUIT)
+  documentNumber     String?
+  vatCondition       VatCondition             @default(RESPONSABLE_INSCRIPTO)
+  paymentConditionId String?
+  currentBalance     Decimal                  @default(0) @db.Decimal(12, 2)
+  creditLimit        Decimal?                 @db.Decimal(12, 2)
+  phone              String?
+  email              String?
+  website            String?
+  notes              String?
+  isActive           Boolean                  @default(true)
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
+  deletedAt          DateTime?
+  createdById        String?
+  updatedById        String?
+  checks             Check[]
+  payments           Payment[]
+  purchaseOrders     PurchaseOrder[]
+  purchaseReceipts   PurchaseReceipt[]
+  paymentCondition   PaymentCondition?        @relation(fields: [paymentConditionId], references: [id])
+  addresses          SupplierAddress[]
+  contacts           SupplierContact[]
+  supplierInvoices   SupplierInvoice[]
+  priceHistory       SupplierProductHistory[]
+
+  @@index([tenantId, documentNumber])
+  @@index([tenantId, companyName])
+  @@schema("tenant")
+}
+
+model SupplierAddress {
+  id         String      @id @default(cuid())
+  supplierId String
+  type       AddressType @default(FISCAL)
+  street     String
+  number     String?
+  floor      String?
+  apartment  String?
+  city       String?
+  state      String?
+  postalCode String?
+  country    String      @default("Argentina")
+  isDefault  Boolean     @default(false)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  supplier   Supplier    @relation(fields: [supplierId], references: [id])
+
+  @@schema("tenant")
+}
+
+model SupplierContact {
+  id         String   @id @default(cuid())
+  supplierId String
+  name       String
+  role       String?
+  phone      String?
+  mobile     String?
+  email      String?
+  isPrimary  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+
+  @@schema("tenant")
+}
+
+model SupplierProductHistory {
+  id              String   @id @default(cuid())
+  supplierId      String
+  productId       String
+  price           Decimal  @db.Decimal(12, 4)
+  currency        String   @default("ARS")
+  date            DateTime @default(now())
+  purchaseOrderId String?
+  product         Product  @relation(fields: [productId], references: [id])
+  supplier        Supplier @relation(fields: [supplierId], references: [id])
+
+  @@index([supplierId, productId])
+  @@schema("tenant")
+}
+
+model ProductCategory {
+  id          String            @id @default(cuid())
+  tenantId    String
+  parentId    String?
+  name        String
+  slug        String?
+  description String?
+  isActive    Boolean           @default(true)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  deletedAt   DateTime?
+  products    Product[]
+  parent      ProductCategory?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children    ProductCategory[] @relation("CategoryTree")
+
+  @@unique([tenantId, name, parentId])
+  @@schema("tenant")
+}
+
+model Product {
+  id                   String                   @id @default(cuid())
+  tenantId             String
+  categoryId           String?
+  unitId               String?
+  internalCode         String?
+  barcode              String?
+  sku                  String?
+  name                 String
+  description          String?
+  trackStock           Boolean                  @default(true)
+  trackBatches         Boolean                  @default(false)
+  trackSerials         Boolean                  @default(false)
+  allowNegative        Boolean                  @default(false)
+  minStock             Decimal?                 @db.Decimal(12, 4)
+  maxStock             Decimal?                 @db.Decimal(12, 4)
+  reorderPoint         Decimal?                 @db.Decimal(12, 4)
+  costPrice            Decimal                  @default(0) @db.Decimal(12, 4)
+  averageCost          Decimal                  @default(0) @db.Decimal(12, 4)
+  lastCost             Decimal                  @default(0) @db.Decimal(12, 4)
+  defaultMargin        Decimal                  @default(0) @db.Decimal(6, 4)
+  weight               Decimal?                 @db.Decimal(10, 4)
+  weightUnit           String?                  @default("kg")
+  status               ProductStatus            @default(ACTIVE)
+  notes                String?
+  createdAt            DateTime                 @default(now())
+  updatedAt            DateTime                 @updatedAt
+  deletedAt            DateTime?
+  createdById          String?
+  updatedById          String?
+  batches              Batch[]
+  specialPrices        CustomerSpecialPrice[]
+  invoiceItems         InvoiceItem[]
+  priceListItems       PriceListItem[]
+  category             ProductCategory?         @relation(fields: [categoryId], references: [id])
+  unit                 UnitOfMeasure?           @relation(fields: [unitId], references: [id])
+  images               ProductImage[]
+  purchaseOrderItems   PurchaseOrderItem[]
+  purchaseRequestItems PurchaseRequestItem[]
+  saleOrderItems       SaleOrderItem[]
+  serialNumbers        SerialNumber[]
+  stocks               Stock[]
+  stockMovements       StockMovement[]
+  supplierHistory      SupplierProductHistory[]
+
+  @@unique([tenantId, internalCode])
+  @@unique([tenantId, barcode])
+  @@index([tenantId, name])
+  @@index([tenantId, status])
+  @@schema("tenant")
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  productId String
+  url       String
+  isPrimary Boolean  @default(false)
+  order     Int      @default(0)
+  altText   String?
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id])
+
+  @@schema("tenant")
+}
+
+model Stock {
+  id               String    @id @default(cuid())
+  productId        String
+  warehouseId      String
+  quantity         Decimal   @default(0) @db.Decimal(12, 4)
+  reservedQuantity Decimal   @default(0) @db.Decimal(12, 4)
+  updatedAt        DateTime  @updatedAt
+  product          Product   @relation(fields: [productId], references: [id])
+  warehouse        Warehouse @relation(fields: [warehouseId], references: [id])
+
+  @@unique([productId, warehouseId])
+  @@schema("tenant")
+}
+
+model StockMovement {
+  id            String            @id @default(cuid())
+  tenantId      String
+  productId     String
+  warehouseId   String
+  type          StockMovementType
+  quantity      Decimal           @db.Decimal(12, 4)
+  previousStock Decimal           @db.Decimal(12, 4)
+  newStock      Decimal           @db.Decimal(12, 4)
+  unitCost      Decimal?          @db.Decimal(12, 4)
+  referenceType String?
+  referenceId   String?
+  batchId       String?
+  serialId      String?
+  reason        String?
+  notes         String?
+  date          DateTime          @default(now())
+  createdById   String?
+  batch         Batch?            @relation(fields: [batchId], references: [id])
+  product       Product           @relation(fields: [productId], references: [id])
+  serial        SerialNumber?     @relation(fields: [serialId], references: [id])
+  warehouse     Warehouse         @relation(fields: [warehouseId], references: [id])
+
+  @@index([tenantId, productId, date])
+  @@index([referenceType, referenceId])
+  @@schema("tenant")
+}
+
+model Batch {
+  id             String          @id @default(cuid())
+  productId      String
+  warehouseId    String
+  batchNumber    String
+  expiryDate     DateTime?
+  quantity       Decimal         @default(0) @db.Decimal(12, 4)
+  initialQty     Decimal         @db.Decimal(12, 4)
+  unitCost       Decimal?        @db.Decimal(12, 4)
+  status         BatchStatus     @default(ACTIVE)
+  notes          String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  product        Product         @relation(fields: [productId], references: [id])
+  warehouse      Warehouse       @relation(fields: [warehouseId], references: [id])
+  stockMovements StockMovement[]
+
+  @@unique([productId, warehouseId, batchNumber])
+  @@schema("tenant")
+}
+
+model SerialNumber {
+  id             String          @id @default(cuid())
+  productId      String
+  warehouseId    String?
+  serial         String
+  status         SerialStatus    @default(IN_STOCK)
+  unitCost       Decimal?        @db.Decimal(12, 4)
+  notes          String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  product        Product         @relation(fields: [productId], references: [id])
+  warehouse      Warehouse?      @relation(fields: [warehouseId], references: [id])
+  stockMovements StockMovement[]
+
+  @@unique([productId, serial])
+  @@schema("tenant")
+}
+
+model PriceList {
+  id        String          @id @default(cuid())
+  tenantId  String
+  name      String
+  currency  String          @default("ARS")
+  isDefault Boolean         @default(false)
+  validFrom DateTime?
+  validTo   DateTime?
+  notes     String?
+  isActive  Boolean         @default(true)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  deletedAt DateTime?
+  customers Customer[]
+  items     PriceListItem[]
+
+  @@unique([tenantId, name])
+  @@schema("tenant")
+}
+
+model PriceListItem {
+  id              String           @id @default(cuid())
+  priceListId     String
+  productId       String
+  price           Decimal          @db.Decimal(12, 4)
+  margin          Decimal?         @db.Decimal(6, 4)
+  updatedAt       DateTime         @updatedAt
+  priceList       PriceList        @relation(fields: [priceListId], references: [id], onDelete: Cascade)
+  product         Product          @relation(fields: [productId], references: [id])
+  volumeDiscounts VolumeDiscount[]
+
+  @@unique([priceListId, productId])
+  @@schema("tenant")
+}
+
+model VolumeDiscount {
+  id              String        @id @default(cuid())
+  priceListItemId String
+  minQuantity     Decimal       @db.Decimal(12, 4)
+  maxQuantity     Decimal?      @db.Decimal(12, 4)
+  discountPercent Decimal?      @db.Decimal(6, 4)
+  fixedPrice      Decimal?      @db.Decimal(12, 4)
+  priceListItem   PriceListItem @relation(fields: [priceListItemId], references: [id], onDelete: Cascade)
+
+  @@schema("tenant")
+}
+
+model CustomerSpecialPrice {
+  id         String    @id @default(cuid())
+  customerId String
+  productId  String
+  price      Decimal   @db.Decimal(12, 4)
+  validFrom  DateTime?
+  validTo    DateTime?
+  notes      String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  customer   Customer  @relation(fields: [customerId], references: [id])
+  product    Product   @relation(fields: [productId], references: [id])
+
+  @@unique([customerId, productId])
+  @@schema("tenant")
+}
+
+model PointOfSale {
+  id            String          @id @default(cuid())
+  tenantId      String
+  branchId      String?
+  number        Int
+  name          String
+  address       String?
+  isActive      Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  invoices      Invoice[]
+  branch        Branch?         @relation(fields: [branchId], references: [id])
+  voucherSeries VoucherSeries[]
+
+  @@unique([tenantId, number])
+  @@schema("tenant")
+}
+
+model VoucherSeries {
+  id            String      @id @default(cuid())
+  tenantId      String
+  pointOfSaleId String
+  voucherType   VoucherType
+  currentNumber Int         @default(0)
+  updatedAt     DateTime    @updatedAt
+  pointOfSale   PointOfSale @relation(fields: [pointOfSaleId], references: [id])
+
+  @@unique([tenantId, pointOfSaleId, voucherType])
+  @@schema("tenant")
+}
+
+model Invoice {
+  id                 String               @id @default(cuid())
+  tenantId           String
+  pointOfSaleId      String
+  voucherType        VoucherType
+  number             Int
+  fullNumber         String
+  date               DateTime             @default(now())
+  dueDate            DateTime?
+  customerId         String?
+  customerSnapshot   Json?
+  paymentConditionId String?
+  salespersonId      String?
+  originInvoiceId    String?
+  saleOrderId        String?
+  subtotal           Decimal              @db.Decimal(12, 2)
+  discountPercent    Decimal              @default(0) @db.Decimal(6, 4)
+  discountAmount     Decimal              @default(0) @db.Decimal(12, 2)
+  taxableBase        Decimal              @db.Decimal(12, 2)
+  taxAmount          Decimal              @db.Decimal(12, 2)
+  total              Decimal              @db.Decimal(12, 2)
+  paidAmount         Decimal              @default(0) @db.Decimal(12, 2)
+  currency           String               @default("ARS")
+  exchangeRate       Decimal              @default(1) @db.Decimal(10, 4)
+  status             InvoiceStatus        @default(DRAFT)
+  cae                String?
+  caeExpiry          DateTime?
+  afipResult         Json?
+  notes              String?
+  internalNotes      String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  deletedAt          DateTime?
+  createdById        String?
+  updatedById        String?
+  customer           Customer?            @relation(fields: [customerId], references: [id])
+  originInvoice      Invoice?             @relation("InvoiceOrigin", fields: [originInvoiceId], references: [id])
+  derivedInvoices    Invoice[]            @relation("InvoiceOrigin")
+  paymentCondition   PaymentCondition?    @relation(fields: [paymentConditionId], references: [id])
+  pointOfSale        PointOfSale          @relation(fields: [pointOfSaleId], references: [id])
+  saleOrder          SaleOrder?           @relation(fields: [saleOrderId], references: [id])
+  salesperson        Salesperson?         @relation(fields: [salespersonId], references: [id])
+  items              InvoiceItem[]
+  paymentLinks       InvoicePaymentLink[]
+  taxes              InvoiceTax[]
+
+  @@unique([tenantId, pointOfSaleId, voucherType, number])
+  @@index([tenantId, customerId])
+  @@index([tenantId, date])
+  @@index([tenantId, status])
+  @@schema("tenant")
+}
+
+model InvoiceItem {
+  id              String   @id @default(cuid())
+  invoiceId       String
+  productId       String?
+  description     String
+  quantity        Decimal  @db.Decimal(12, 4)
+  unitPrice       Decimal  @db.Decimal(12, 4)
+  discountPercent Decimal  @default(0) @db.Decimal(6, 4)
+  discountAmount  Decimal  @default(0) @db.Decimal(12, 4)
+  taxRateId       String?
+  taxPercent      Decimal  @default(0) @db.Decimal(6, 4)
+  taxAmount       Decimal  @default(0) @db.Decimal(12, 4)
+  subtotal        Decimal  @db.Decimal(12, 4)
+  total           Decimal  @db.Decimal(12, 4)
+  order           Int      @default(0)
+  invoice         Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  product         Product? @relation(fields: [productId], references: [id])
+  taxRate         TaxRate? @relation(fields: [taxRateId], references: [id])
+
+  @@schema("tenant")
+}
+
+model InvoiceTax {
+  id        String  @id @default(cuid())
+  invoiceId String
+  taxRateId String
+  base      Decimal @db.Decimal(12, 2)
+  amount    Decimal @db.Decimal(12, 2)
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  taxRate   TaxRate @relation(fields: [taxRateId], references: [id])
+
+  @@schema("tenant")
+}
+
+model InvoicePaymentLink {
+  id        String  @id @default(cuid())
+  invoiceId String
+  paymentId String
+  amount    Decimal @db.Decimal(12, 2)
+  invoice   Invoice @relation(fields: [invoiceId], references: [id])
+  payment   Payment @relation(fields: [paymentId], references: [id])
+
+  @@unique([invoiceId, paymentId])
+  @@schema("tenant")
+}
+
+model Salesperson {
+  id             String      @id @default(cuid())
+  tenantId       String
+  userId         String?
+  firstName      String
+  lastName       String
+  email          String?
+  phone          String?
+  commissionRate Decimal     @default(0) @db.Decimal(6, 4)
+  isActive       Boolean     @default(true)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  deletedAt      DateTime?
+  invoices       Invoice[]
+  saleOrders     SaleOrder[]
+
+  @@schema("tenant")
+}
+
+model SaleOrder {
+  id               String          @id @default(cuid())
+  tenantId         String
+  number           String
+  customerId       String
+  salespersonId    String?
+  date             DateTime        @default(now())
+  expectedDelivery DateTime?
+  deliveryAddress  Json?
+  status           SaleOrderStatus @default(PENDING)
+  subtotal         Decimal         @db.Decimal(12, 2)
+  discountAmount   Decimal         @default(0) @db.Decimal(12, 2)
+  taxAmount        Decimal         @db.Decimal(12, 2)
+  total            Decimal         @db.Decimal(12, 2)
+  notes            String?
+  internalNotes    String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  deletedAt        DateTime?
+  createdById      String?
+  invoices         Invoice[]
+  customer         Customer        @relation(fields: [customerId], references: [id])
+  salesperson      Salesperson?    @relation(fields: [salespersonId], references: [id])
+  items            SaleOrderItem[]
+
+  @@unique([tenantId, number])
+  @@index([tenantId, customerId])
+  @@index([tenantId, status])
+  @@schema("tenant")
+}
+
+model SaleOrderItem {
+  id              String    @id @default(cuid())
+  saleOrderId     String
+  productId       String?
+  description     String
+  quantity        Decimal   @db.Decimal(12, 4)
+  deliveredQty    Decimal   @default(0) @db.Decimal(12, 4)
+  unitPrice       Decimal   @db.Decimal(12, 4)
+  discountPercent Decimal   @default(0) @db.Decimal(6, 4)
+  taxPercent      Decimal   @default(0) @db.Decimal(6, 4)
+  subtotal        Decimal   @db.Decimal(12, 4)
+  taxAmount       Decimal   @db.Decimal(12, 4)
+  total           Decimal   @db.Decimal(12, 4)
+  warehouseId     String?
+  order           Int       @default(0)
+  product         Product?  @relation(fields: [productId], references: [id])
+  saleOrder       SaleOrder @relation(fields: [saleOrderId], references: [id], onDelete: Cascade)
+
+  @@schema("tenant")
+}
+
+model PurchaseRequest {
+  id             String                @id @default(cuid())
+  tenantId       String
+  number         String
+  requesterId    String?
+  warehouseId    String?
+  date           DateTime              @default(now())
+  status         PurchaseRequestStatus @default(PENDING)
+  notes          String?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  deletedAt      DateTime?
+  purchaseOrders PurchaseOrder[]
+  items          PurchaseRequestItem[]
+
+  @@unique([tenantId, number])
+  @@schema("tenant")
+}
+
+model PurchaseRequestItem {
+  id                String          @id @default(cuid())
+  purchaseRequestId String
+  productId         String?
+  description       String
+  quantity          Decimal         @db.Decimal(12, 4)
+  estimatedPrice    Decimal?        @db.Decimal(12, 4)
+  notes             String?
+  product           Product?        @relation(fields: [productId], references: [id])
+  purchaseRequest   PurchaseRequest @relation(fields: [purchaseRequestId], references: [id], onDelete: Cascade)
+
+  @@schema("tenant")
+}
+
+model PurchaseOrder {
+  id                String              @id @default(cuid())
+  tenantId          String
+  number            String
+  supplierId        String
+  purchaseRequestId String?
+  date              DateTime            @default(now())
+  expectedDelivery  DateTime?
+  status            PurchaseOrderStatus @default(DRAFT)
+  subtotal          Decimal             @db.Decimal(12, 2)
+  taxAmount         Decimal             @default(0) @db.Decimal(12, 2)
+  total             Decimal             @db.Decimal(12, 2)
+  currency          String              @default("ARS")
+  exchangeRate      Decimal             @default(1) @db.Decimal(10, 4)
+  notes             String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  deletedAt         DateTime?
+  createdById       String?
+  purchaseRequest   PurchaseRequest?    @relation(fields: [purchaseRequestId], references: [id])
+  supplier          Supplier            @relation(fields: [supplierId], references: [id])
+  items             PurchaseOrderItem[]
+  receipts          PurchaseReceipt[]
+  supplierInvoices  SupplierInvoice[]
+
+  @@unique([tenantId, number])
+  @@index([tenantId, supplierId])
+  @@schema("tenant")
+}
+
+model PurchaseOrderItem {
+  id              String                @id @default(cuid())
+  purchaseOrderId String
+  productId       String?
+  taxRateId       String?
+  description     String
+  quantity        Decimal               @db.Decimal(12, 4)
+  receivedQty     Decimal               @default(0) @db.Decimal(12, 4)
+  unitPrice       Decimal               @db.Decimal(12, 4)
+  taxPercent      Decimal               @default(0) @db.Decimal(6, 4)
+  subtotal        Decimal               @db.Decimal(12, 4)
+  taxAmount       Decimal               @default(0) @db.Decimal(12, 4)
+  total           Decimal               @db.Decimal(12, 4)
+  order           Int                   @default(0)
+  product         Product?              @relation(fields: [productId], references: [id])
+  purchaseOrder   PurchaseOrder         @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  taxRate         TaxRate?              @relation(fields: [taxRateId], references: [id])
+  receiptItems    PurchaseReceiptItem[]
+
+  @@schema("tenant")
+}
+
+model PurchaseReceipt {
+  id              String                @id @default(cuid())
+  tenantId        String
+  purchaseOrderId String?
+  supplierId      String?
+  warehouseId     String
+  number          String
+  date            DateTime              @default(now())
+  notes           String?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  createdById     String?
+  purchaseOrder   PurchaseOrder?        @relation(fields: [purchaseOrderId], references: [id])
+  supplier        Supplier?             @relation(fields: [supplierId], references: [id])
+  warehouse       Warehouse             @relation(fields: [warehouseId], references: [id])
+  items           PurchaseReceiptItem[]
+
+  @@unique([tenantId, number])
+  @@schema("tenant")
+}
+
+model PurchaseReceiptItem {
+  id                  String             @id @default(cuid())
+  purchaseReceiptId   String
+  purchaseOrderItemId String?
+  productId           String?
+  quantity            Decimal            @db.Decimal(12, 4)
+  unitCost            Decimal?           @db.Decimal(12, 4)
+  batchNumber         String?
+  expiryDate          DateTime?
+  serialNumbers       String[]
+  purchaseOrderItem   PurchaseOrderItem? @relation(fields: [purchaseOrderItemId], references: [id])
+  purchaseReceipt     PurchaseReceipt    @relation(fields: [purchaseReceiptId], references: [id], onDelete: Cascade)
+
+  @@schema("tenant")
+}
+
+model SupplierInvoice {
+  id              String                @id @default(cuid())
+  tenantId        String
+  supplierId      String
+  purchaseOrderId String?
+  invoiceNumber   String
+  invoiceDate     DateTime
+  dueDate         DateTime?
+  subtotal        Decimal               @db.Decimal(12, 2)
+  taxAmount       Decimal               @default(0) @db.Decimal(12, 2)
+  total           Decimal               @db.Decimal(12, 2)
+  paidAmount      Decimal               @default(0) @db.Decimal(12, 2)
+  status          SupplierInvoiceStatus @default(PENDING)
+  notes           String?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  deletedAt       DateTime?
+  createdById     String?
+  purchaseOrder   PurchaseOrder?        @relation(fields: [purchaseOrderId], references: [id])
+  supplier        Supplier              @relation(fields: [supplierId], references: [id])
+
+  @@index([tenantId, supplierId])
+  @@index([tenantId, status])
+  @@schema("tenant")
+}
+
+model PaymentMethod {
+  id               String            @id @default(cuid())
+  tenantId         String
+  name             String
+  type             PaymentMethodType
+  surchargePercent Decimal           @default(0) @db.Decimal(6, 4)
+  isActive         Boolean           @default(true)
+  order            Int               @default(0)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  paymentItems     PaymentItem[]
+
+  @@unique([tenantId, name])
+  @@schema("tenant")
+}
+
+model CashRegister {
+  id             String        @id @default(cuid())
+  tenantId       String
+  branchId       String
+  name           String
+  currentBalance Decimal       @default(0) @db.Decimal(12, 2)
+  isActive       Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  branch         Branch        @relation(fields: [branchId], references: [id])
+  sessions       CashSession[]
+
+  @@unique([tenantId, branchId, name])
+  @@schema("tenant")
+}
+
+model CashSession {
+  id              String            @id @default(cuid())
+  cashRegisterId  String
+  userId          String?
+  openedAt        DateTime          @default(now())
+  closedAt        DateTime?
+  openingBalance  Decimal           @db.Decimal(12, 2)
+  closingBalance  Decimal?          @db.Decimal(12, 2)
+  expectedBalance Decimal?          @db.Decimal(12, 2)
+  difference      Decimal?          @db.Decimal(12, 2)
+  status          CashSessionStatus @default(OPEN)
+  notes           String?
+  cashRegister    CashRegister      @relation(fields: [cashRegisterId], references: [id])
+  payments        Payment[]
+
+  @@schema("tenant")
+}
+
+model Payment {
+  id            String               @id @default(cuid())
+  tenantId      String
+  cashSessionId String?
+  direction     PaymentDirection
+  customerId    String?
+  supplierId    String?
+  date          DateTime             @default(now())
+  total         Decimal              @db.Decimal(12, 2)
+  reference     String?
+  notes         String?
+  status        PaymentStatus        @default(COMPLETED)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  createdById   String?
+  invoiceLinks  InvoicePaymentLink[]
+  cashSession   CashSession?         @relation(fields: [cashSessionId], references: [id])
+  customer      Customer?            @relation(fields: [customerId], references: [id])
+  supplier      Supplier?            @relation(fields: [supplierId], references: [id])
+  items         PaymentItem[]
+
+  @@index([tenantId, customerId])
+  @@index([tenantId, supplierId])
+  @@index([tenantId, date])
+  @@schema("tenant")
+}
+
+model PaymentItem {
+  id               String        @id @default(cuid())
+  paymentId        String
+  paymentMethodId  String
+  amount           Decimal       @db.Decimal(12, 2)
+  cardBrand        String?
+  cardLastFour     String?
+  cardInstallments Int?
+  posTerminalRef   String?
+  bankRef          String?
+  checkId          String?
+  check            Check?        @relation(fields: [checkId], references: [id])
+  payment          Payment       @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  paymentMethod    PaymentMethod @relation(fields: [paymentMethodId], references: [id])
+
+  @@schema("tenant")
+}
+
+model Check {
+  id                String        @id @default(cuid())
+  tenantId          String
+  type              CheckType
+  number            String
+  bankName          String
+  bankBranch        String?
+  accountNumber     String?
+  amount            Decimal       @db.Decimal(12, 2)
+  issueDate         DateTime
+  dueDate           DateTime
+  customerId        String?
+  drawerName        String?
+  supplierId        String?
+  status            CheckStatus   @default(IN_WALLET)
+  endorsedTo        String?
+  rejectedReason    String?
+  bankAccountId     String?
+  bankTransactionId String?
+  notes             String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  bankAccount       BankAccount?  @relation(fields: [bankAccountId], references: [id])
+  customer          Customer?     @relation(fields: [customerId], references: [id])
+  supplier          Supplier?     @relation(fields: [supplierId], references: [id])
+  paymentItems      PaymentItem[]
+
+  @@index([tenantId, status])
+  @@index([tenantId, dueDate])
+  @@schema("tenant")
+}
+
+model BankAccount {
+  id             String            @id @default(cuid())
+  tenantId       String
+  bankName       String
+  accountType    BankAccountType   @default(CHECKING)
+  accountNumber  String?
+  cbu            String?
+  alias          String?
+  currency       String            @default("ARS")
+  currentBalance Decimal           @default(0) @db.Decimal(12, 2)
+  isActive       Boolean           @default(true)
+  notes          String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  transactions   BankTransaction[]
+  checks         Check[]
+
+  @@schema("tenant")
+}
+
+model BankTransaction {
+  id            String      @id @default(cuid())
+  bankAccountId String
+  date          DateTime
+  type          String
+  amount        Decimal     @db.Decimal(12, 2)
+  balance       Decimal     @db.Decimal(12, 2)
+  description   String?
+  reference     String?
+  isReconciled  Boolean     @default(false)
+  paymentId     String?
+  createdAt     DateTime    @default(now())
+  bankAccount   BankAccount @relation(fields: [bankAccountId], references: [id])
+
+  @@index([bankAccountId, date])
+  @@schema("tenant")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  tenantId  String
+  userId    String?
+  entity    String
+  entityId  String
+  action    String
+  before    Json?
+  after     Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([tenantId, entity, entityId])
+  @@index([tenantId, createdAt])
+  @@schema("tenant")
+}
+
+enum TenantStatus {
+  TRIAL
+  ACTIVE
+  SUSPENDED
+  CANCELLED
+
+  @@schema("public")
+}
+
+enum PlanInterval {
+  MONTHLY
+  ANNUAL
+
+  @@schema("public")
+}
+
+enum VatCondition {
+  RESPONSABLE_INSCRIPTO
+  MONOTRIBUTISTA
+  CONSUMIDOR_FINAL
+  EXENTO
+
+  @@schema("tenant")
+}
+
+enum DocumentType {
+  CUIT
+  CUIL
+  DNI
+  PASSPORT
+  OTHER
+
+  @@schema("tenant")
+}
+
+enum PersonType {
+  INDIVIDUAL
+  COMPANY
+
+  @@schema("tenant")
+}
+
+enum AddressType {
+  FISCAL
+  DELIVERY
+  BILLING
+  OTHER
+
+  @@schema("tenant")
+}
+
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+  DISCONTINUED
+
+  @@schema("tenant")
+}
+
+enum StockMovementType {
+  PURCHASE
+  SALE
+  ADJUSTMENT
+  TRANSFER_IN
+  TRANSFER_OUT
+  LOSS
+  RETURN
+  INVENTORY_COUNT
+
+  @@schema("tenant")
+}
+
+enum BatchStatus {
+  ACTIVE
+  EXPIRED
+  DEPLETED
+
+  @@schema("tenant")
+}
+
+enum SerialStatus {
+  IN_STOCK
+  RESERVED
+  SOLD
+  DEFECTIVE
+
+  @@schema("tenant")
+}
+
+enum VoucherType {
+  FACTURA_A
+  FACTURA_B
+  FACTURA_C
+  NOTA_CREDITO_A
+  NOTA_CREDITO_B
+  NOTA_CREDITO_C
+  NOTA_DEBITO_A
+  NOTA_DEBITO_B
+  NOTA_DEBITO_C
+  REMITO
+  PRESUPUESTO
+  ORDEN_COMPRA
+  RECIBO
+
+  @@schema("tenant")
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  CANCELLED
+  PAID
+  PARTIAL
+
+  @@schema("tenant")
+}
+
+enum SaleOrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  DISPATCHED
+  DELIVERED
+  CANCELLED
+
+  @@schema("tenant")
+}
+
+enum PurchaseOrderStatus {
+  DRAFT
+  SENT
+  PARTIAL
+  RECEIVED
+  CANCELLED
+
+  @@schema("tenant")
+}
+
+enum PurchaseRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  ORDERED
+
+  @@schema("tenant")
+}
+
+enum SupplierInvoiceStatus {
+  PENDING
+  RECONCILED
+  PAID
+  CANCELLED
+
+  @@schema("tenant")
+}
+
+enum TaxType {
+  IVA
+  PERCEPCION_IVA
+  PERCEPCION_IIBB
+  MUNICIPAL
+  OTHER
+
+  @@schema("tenant")
+}
+
+enum PaymentMethodType {
+  CASH
+  DEBIT_CARD
+  CREDIT_CARD
+  BANK_TRANSFER
+  CHECK
+  MERCADO_PAGO
+  CURRENT_ACCOUNT
+  OTHER
+
+  @@schema("tenant")
+}
+
+enum PaymentDirection {
+  CUSTOMER
+  SUPPLIER
+  INTERNAL
+
+  @@schema("tenant")
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+
+  @@schema("tenant")
+}
+
+enum CheckType {
+  OWN
+  THIRD_PARTY
+
+  @@schema("tenant")
+}
+
+enum CheckStatus {
+  IN_WALLET
+  DEPOSITED
+  ENDORSED
+  REJECTED
+  CANCELLED
+
+  @@schema("tenant")
+}
+
+enum BankAccountType {
+  CHECKING
+  SAVINGS
+  OTHER
+
+  @@schema("tenant")
+}
+
+enum CashSessionStatus {
+  OPEN
+  CLOSED
+
+  @@schema("tenant")
+}
