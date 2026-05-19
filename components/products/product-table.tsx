@@ -31,9 +31,9 @@ interface ProductRow {
   sku: string | null
   name: string
   status: string
-  costPrice: { toNumber: () => number } | number
-  defaultMargin: { toNumber: () => number } | number
-  minStock: { toNumber: () => number } | number | null
+  costPrice: string | number
+  defaultMargin: string | number
+  minStock: string | number | null
   trackStock: boolean
   totalStock: number
   isLowStock: boolean
@@ -81,10 +81,9 @@ function getStatusBadge(status: string) {
   )
 }
 
-function toNum(val: { toNumber: () => number } | number | null | undefined): number {
+function toNum(val: string | number | null | undefined): number {
   if (val == null) return 0
-  if (typeof val === "number") return val
-  return val.toNumber()
+  return Number(val)
 }
 
 function formatCurrency(val: number): string {

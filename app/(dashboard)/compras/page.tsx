@@ -69,7 +69,7 @@ export default function ComprasPage() {
     try {
       const sp = new URLSearchParams({
         voucherType: "ORDEN_COMPRA",
-        pageSize: "20",
+        limit: "20",
         page: String(params.page),
         ...(params.search && { search: params.search }),
         ...(params.status && { status: params.status }),

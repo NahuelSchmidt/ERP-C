@@ -52,16 +52,16 @@ export async function GET(
       )
     }
 
-    // Compute total stock and low stock flag
+    // Compute total stock and low stock flag.
+    // Prisma v7 + adapter-pg returns Decimal fields as strings.
     const totalStock = product.stocks.reduce(
-      (acc: number, s: { quantity: { toNumber: () => number } }) =>
-        acc + s.quantity.toNumber(),
+      (acc: number, s: { quantity: unknown }) => acc + Number(s.quantity),
       0
     )
     const isLowStock =
       product.trackStock &&
       product.minStock != null &&
-      totalStock < product.minStock.toNumber()
+      totalStock < Number(product.minStock)
 
     return NextResponse.json({ data: { ...product, totalStock, isLowStock } })
   } catch (error) {

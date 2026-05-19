@@ -21,10 +21,10 @@ import {
 interface MovementRow {
   id: string
   type: StockMovementType
-  quantity: { toNumber?: () => number } | number
-  previousStock: { toNumber?: () => number } | number
-  newStock: { toNumber?: () => number } | number
-  unitCost: { toNumber?: () => number } | number | null
+  quantity: string | number
+  previousStock: string | number
+  newStock: string | number
+  unitCost: string | number | null
   reason: string | null
   notes: string | null
   date: string | Date
@@ -51,10 +51,8 @@ interface StockTableProps {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function toNum(val: { toNumber?: () => number } | number | null | undefined): number {
+function toNum(val: string | number | null | undefined): number {
   if (val == null) return 0
-  if (typeof val === "number") return val
-  if (typeof val.toNumber === "function") return val.toNumber()
   return Number(val)
 }
 

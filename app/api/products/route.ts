@@ -72,17 +72,17 @@ export async function GET(req: NextRequest) {
       }),
     ])
 
-    // Enrich with total stock and low stock flag
+    // Enrich with total stock and low stock flag.
+    // Prisma v7 + adapter-pg returns Decimal fields as strings.
     const enriched = products.map((p) => {
       const totalStock = p.stocks.reduce(
-        (acc: number, s: { quantity: { toNumber: () => number } }) =>
-          acc + s.quantity.toNumber(),
+        (acc: number, s: { quantity: unknown }) => acc + Number(s.quantity),
         0
       )
       const isLowStock =
         p.trackStock &&
         p.minStock != null &&
-        totalStock < p.minStock.toNumber()
+        totalStock < Number(p.minStock)
 
       return { ...p, totalStock, isLowStock }
     })

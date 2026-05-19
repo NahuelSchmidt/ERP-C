@@ -61,7 +61,18 @@ export async function GET(req: NextRequest) {
       orderBy: { name: "asc" },
     })
 
-    return NextResponse.json({ data: registers })
+    const data = registers.map(({ sessions, ...reg }) => ({
+      ...reg,
+      currentBalance: Number(reg.currentBalance),
+      currentSession: sessions[0]
+        ? {
+            ...sessions[0],
+            openingBalance: Number(sessions[0].openingBalance),
+          }
+        : null,
+    }))
+
+    return NextResponse.json({ data })
   } catch (error) {
     console.error("[GET /api/cash/registers]", error)
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 })

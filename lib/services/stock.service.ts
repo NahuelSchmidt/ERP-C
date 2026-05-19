@@ -50,7 +50,7 @@ export interface CreateStockMovementParams {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function toDecimal(value: number | Decimal | null | undefined): Decimal {
+function toDecimal(value: number | string | Decimal | null | undefined): Decimal {
   if (value === null || value === undefined) return new Decimal(0)
   if (value instanceof Decimal) return value
   return new Decimal(value)
@@ -232,7 +232,7 @@ export async function getTotalStock(db: any, productId: string): Promise<Decimal
   })
 
   return stocks.reduce(
-    (acc: Decimal, s: { quantity: Decimal }) => acc.plus(toDecimal(s.quantity)),
+    (acc: Decimal, s: { quantity: string | number | Decimal }) => acc.plus(toDecimal(s.quantity)),
     new Decimal(0)
   )
 }

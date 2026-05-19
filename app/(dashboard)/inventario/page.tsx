@@ -39,7 +39,7 @@ export default function InventarioPage() {
     void (async () => {
       setIsLoading(true)
       try {
-        const res = await fetch("/api/products?pageSize=100")
+        const res = await fetch("/api/products?limit=100")
         if (!res.ok) throw new Error()
         const json = await res.json() as { data: ProductStock[] }
         setProducts(json.data)

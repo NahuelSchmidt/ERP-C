@@ -47,17 +47,18 @@ export async function GET(
       orderBy: { warehouse: { name: "asc" } },
     })
 
+    // Prisma v7 + adapter-pg returns Decimal fields as strings.
     const enriched = stocks.map((s: {
-      quantity: { toNumber: () => number }
-      reservedQuantity: { toNumber: () => number }
+      quantity: unknown
+      reservedQuantity: unknown
       warehouse: unknown
       productId: string
       warehouseId: string
     }) => {
-      const qty = s.quantity.toNumber()
-      const reserved = s.reservedQuantity.toNumber()
+      const qty = Number(s.quantity)
+      const reserved = Number(s.reservedQuantity)
       const available = qty - reserved
-      const minStockVal = product.minStock?.toNumber() ?? null
+      const minStockVal = product.minStock != null ? Number(product.minStock) : null
       const isLow = product.trackStock && minStockVal !== null && qty < minStockVal
 
       return {
@@ -76,8 +77,8 @@ export async function GET(
         product: {
           id: product.id,
           name: product.name,
-          minStock: product.minStock?.toNumber() ?? null,
-          maxStock: product.maxStock?.toNumber() ?? null,
+          minStock: product.minStock != null ? Number(product.minStock) : null,
+          maxStock: product.maxStock != null ? Number(product.maxStock) : null,
         },
         totalStock,
         stocks: enriched,

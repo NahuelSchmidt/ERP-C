@@ -22,23 +22,23 @@ interface CashRegister {
 interface Payment {
   id: string
   date: string
-  type: string
-  amount: number | string
+  direction: string
+  total: number | string
   status: string
   reference: string | null
   customer: { companyName: string | null; firstName: string | null; lastName: string | null } | null
+  supplier: { companyName: string | null } | null
 }
 
-const PAYMENT_TYPE_LABELS: Record<string, string> = {
-  COBRO: "Cobro",
-  PAGO: "Pago",
-  TRANSFERENCIA: "Transferencia",
-  AJUSTE: "Ajuste",
+const DIRECTION_LABELS: Record<string, string> = {
+  CUSTOMER: "Cobro",
+  SUPPLIER: "Pago",
+  INTERNAL: "Interno",
 }
 
 const STATUS_LABELS: Record<string, string> = {
   PENDING: "Pendiente",
-  CONFIRMED: "Confirmado",
+  COMPLETED: "Completado",
   CANCELLED: "Anulado",
 }
 
@@ -61,12 +61,16 @@ function formatDate(date: string): string {
 }
 
 function getPayeeName(payment: Payment): string {
-  if (!payment.customer) return "—"
-  return (
-    payment.customer.companyName ??
-    [payment.customer.firstName, payment.customer.lastName].filter(Boolean).join(" ") ??
-    "—"
-  )
+  if (payment.customer) {
+    return (
+      payment.customer.companyName ??
+      ([payment.customer.firstName, payment.customer.lastName].filter(Boolean).join(" ") || "—")
+    )
+  }
+  if (payment.supplier) {
+    return payment.supplier.companyName ?? "—"
+  }
+  return "—"
 }
 
 export default function TesoreriaPage() {
@@ -218,7 +222,7 @@ export default function TesoreriaPage() {
                   <tr key={pay.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 text-gray-500 text-xs">{formatDate(pay.date)}</td>
                     <td className="px-4 py-3 text-gray-700">
-                      {PAYMENT_TYPE_LABELS[pay.type] ?? pay.type}
+                      {DIRECTION_LABELS[pay.direction] ?? pay.direction}
                     </td>
                     <td className="px-4 py-3 text-gray-700">
                       {getPayeeName(pay)}
@@ -227,7 +231,7 @@ export default function TesoreriaPage() {
                       )}
                     </td>
                     <td className="px-4 py-3 text-right font-mono font-medium text-gray-900">
-                      {formatCurrency(pay.amount)}
+                      {formatCurrency(pay.total)}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span

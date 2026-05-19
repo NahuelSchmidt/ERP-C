@@ -69,7 +69,7 @@ export default function VentasPage() {
     try {
       const sp = new URLSearchParams({
         voucherType: "FACTURA_A,FACTURA_B,FACTURA_C",
-        pageSize: "20",
+        limit: "20",
         page: String(params.page),
         ...(params.search && { search: params.search }),
         ...(params.status && { status: params.status }),

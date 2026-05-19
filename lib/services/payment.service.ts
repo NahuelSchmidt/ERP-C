@@ -46,10 +46,12 @@ export interface RecordSupplierPaymentParams {
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Formatea Decimal de Prisma a número JS. */
-function toNumber(d: Decimal | number | null | undefined): number {
+/** Convierte Decimal de Prisma (string/number/Decimal) a número JS. */
+function toNumber(d: Decimal | string | number | null | undefined): number {
   if (d == null) return 0
-  return typeof d === "number" ? d : d.toNumber()
+  if (typeof d === "number") return d
+  if (typeof d === "string") return parseFloat(d)
+  return d.toNumber()
 }
 
 // ---------------------------------------------------------------------------
