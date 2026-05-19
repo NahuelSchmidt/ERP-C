@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
+import { useState, useCallback, useEffect, Suspense } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { PlusIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
@@ -69,7 +69,7 @@ const STATUS_OPTIONS: { value: string; label: string }[] = [
   { value: "CANCELLED", label: "Anulada" },
 ]
 
-export default function FacturacionPage() {
+function FacturacionContent() {
   const searchParams = useSearchParams()
   const customerId = searchParams.get("customerId") ?? ""
 
@@ -261,5 +261,13 @@ export default function FacturacionPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function FacturacionPage() {
+  return (
+    <Suspense fallback={null}>
+      <FacturacionContent />
+    </Suspense>
   )
 }
