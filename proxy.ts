@@ -8,6 +8,7 @@
  * Ejecuta en todas las rutas excepto:
  *   - /login              → Página pública de autenticación
  *   - /api/auth/**        → Endpoints de NextAuth
+ *   - /api/debug/**       → Endpoint de diagnóstico público
  *   - /_next/static/**   → Assets estáticos de Next.js
  *   - /_next/image/**    → Optimizador de imágenes
  *   - /favicon.ico       → Favicon
@@ -38,6 +39,6 @@ export default auth((req) => {
 
 export const config = {
   matcher: [
-    "/((?!login|api/auth|_next/static|_next/image|favicon\\.ico).*)",
+    "/((?!login|api/auth|api/debug|_next/static|_next/image|favicon\\.ico).*)",
   ],
 }
