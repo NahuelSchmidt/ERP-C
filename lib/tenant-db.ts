@@ -55,7 +55,10 @@ function createBaseClient(): PrismaClient {
   if (!connectionString) {
     throw new Error("DATABASE_URL no está definida en las variables de entorno.")
   }
-  const pool = new Pool({ connectionString })
+  const pool = new Pool({
+    connectionString,
+    max: process.env.NODE_ENV === "production" ? 1 : 10,
+  })
   const adapter = new PrismaPg(pool)
   return new PrismaClient({ adapter })
 }

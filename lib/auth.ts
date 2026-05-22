@@ -44,74 +44,79 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
 
       async authorize(credentials) {
-        // 1. Validar el shape de las credenciales
-        const parsed = credentialsSchema.safeParse(credentials)
-        if (!parsed.success) return null
+        try {
+          // 1. Validar el shape de las credenciales
+          const parsed = credentialsSchema.safeParse(credentials)
+          if (!parsed.success) return null
 
-        const { email, password, tenantSlug } = parsed.data
+          const { email, password, tenantSlug } = parsed.data
 
-        // 2. Buscar el usuario global en el schema "public"
-        const user = await prisma.user.findUnique({
-          where: { email: email.toLowerCase().trim() },
-        })
-
-        if (!user || !user.isActive || user.deletedAt) return null
-
-        // 3. Verificar contraseña
-        const isValid = await compare(password, user.passwordHash)
-        if (!isValid) return null
-
-        // 4. Buscar la membresía del usuario en el tenant indicado
-        //    Si no se indica tenantSlug, tomamos el primer tenant activo del usuario
-        let tenantUser
-        if (tenantSlug) {
-          const tenant = await prisma.tenant.findUnique({
-            where: { slug: tenantSlug },
+          // 2. Buscar el usuario global en el schema "public"
+          const user = await prisma.user.findUnique({
+            where: { email: email.toLowerCase().trim() },
           })
-          if (!tenant || tenant.deletedAt) return null
 
-          tenantUser = await prisma.tenantUser.findUnique({
-            where: { tenantId_userId: { tenantId: tenant.id, userId: user.id } },
-            include: { tenant: true },
-          })
-        } else {
-          tenantUser = await prisma.tenantUser.findFirst({
-            where: { userId: user.id, isActive: true },
-            include: { tenant: true },
-            orderBy: { createdAt: "asc" },
-          })
-        }
+          if (!user || !user.isActive || user.deletedAt) return null
 
-        if (!tenantUser || !tenantUser.isActive) return null
-        if (!tenantUser.tenant || tenantUser.tenant.deletedAt) return null
-        if (
-          tenantUser.tenant.status === "SUSPENDED" ||
-          tenantUser.tenant.status === "CANCELLED"
-        ) {
+          // 3. Verificar contraseña
+          const isValid = await compare(password, user.passwordHash)
+          if (!isValid) return null
+
+          // 4. Buscar la membresía del usuario en el tenant indicado
+          //    Si no se indica tenantSlug, tomamos el primer tenant activo del usuario
+          let tenantUser
+          if (tenantSlug) {
+            const tenant = await prisma.tenant.findUnique({
+              where: { slug: tenantSlug },
+            })
+            if (!tenant || tenant.deletedAt) return null
+
+            tenantUser = await prisma.tenantUser.findUnique({
+              where: { tenantId_userId: { tenantId: tenant.id, userId: user.id } },
+              include: { tenant: true },
+            })
+          } else {
+            tenantUser = await prisma.tenantUser.findFirst({
+              where: { userId: user.id, isActive: true },
+              include: { tenant: true },
+              orderBy: { createdAt: "asc" },
+            })
+          }
+
+          if (!tenantUser || !tenantUser.isActive) return null
+          if (!tenantUser.tenant || tenantUser.tenant.deletedAt) return null
+          if (
+            tenantUser.tenant.status === "SUSPENDED" ||
+            tenantUser.tenant.status === "CANCELLED"
+          ) {
+            return null
+          }
+
+          // 5. Actualizar lastLoginAt de forma no bloqueante
+          prisma.user
+            .update({
+              where: { id: user.id },
+              data: { lastLoginAt: new Date() },
+            })
+            .catch(() => {/* ignorar error de actualización de audit */})
+
+          // 6. Retornar objeto de usuario enriquecido
+          return {
+            id: user.id,
+            email: user.email,
+            name:
+              [user.firstName, user.lastName].filter(Boolean).join(" ") ||
+              user.email,
+            image: user.avatarUrl ?? null,
+            // Datos de tenant — propagados al JWT en el callback jwt
+            tenantId: tenantUser.tenantId,
+            tenantSlug: tenantUser.tenant.slug,
+            tenantDbSchema: tenantUser.tenant.dbSchema,
+            roleId: tenantUser.roleId,
+          }
+        } catch (error) {
+          console.error("[auth] authorize — error inesperado:", error)
           return null
-        }
-
-        // 5. Actualizar lastLoginAt de forma no bloqueante
-        prisma.user
-          .update({
-            where: { id: user.id },
-            data: { lastLoginAt: new Date() },
-          })
-          .catch(() => {/* ignorar error de actualización de audit */})
-
-        // 6. Retornar objeto de usuario enriquecido
-        return {
-          id: user.id,
-          email: user.email,
-          name:
-            [user.firstName, user.lastName].filter(Boolean).join(" ") ||
-            user.email,
-          image: user.avatarUrl ?? null,
-          // Datos de tenant — propagados al JWT en el callback jwt
-          tenantId: tenantUser.tenantId,
-          tenantSlug: tenantUser.tenant.slug,
-          tenantDbSchema: tenantUser.tenant.dbSchema,
-          roleId: tenantUser.roleId,
         }
       },
     }),

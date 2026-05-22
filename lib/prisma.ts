@@ -34,7 +34,12 @@ function createPrismaClient(): PrismaClient {
     )
   }
 
-  const pool = new Pool({ connectionString })
+  // En serverless (Vercel) cada instancia de función tiene su propio pool.
+  // max:1 evita agotar el límite de conexiones de Neon en prod.
+  const pool = new Pool({
+    connectionString,
+    max: process.env.NODE_ENV === "production" ? 1 : 10,
+  })
   const adapter = new PrismaPg(pool)
 
   return new PrismaClient({ adapter })
