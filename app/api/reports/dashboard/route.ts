@@ -17,7 +17,7 @@
 
 import { NextResponse } from "next/server"
 import { getTenantDb, getTenantContext } from "@/lib/get-tenant-db"
-import type { InvoiceStatus } from "@prisma/client"
+import { $Enums } from "@prisma/client"
 
 export async function GET() {
   try {
@@ -37,7 +37,7 @@ export async function GET() {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0)
 
     // Status de facturas activas (no borrador ni anulada)
-    const activeStatuses: InvoiceStatus[] = ["ISSUED", "PAID", "PARTIAL"]
+    const activeStatuses: $Enums.InvoiceStatus[] = ["ISSUED", "PAID", "PARTIAL"]
 
     // ---------------------------------------------------------------------------
     // 1. Ventas del día
@@ -211,7 +211,7 @@ export async function GET() {
         _sum: { total: "desc" },
       },
       take: 5,
-    }) as Array<{ productId: string | null; _sum: { quantity: number | null; total: number | null } }>
+    }) as unknown as Array<{ productId: string | null; _sum: { quantity: number | null; total: number | null } }>
 
     // Enriquecer con nombres de producto
     const topProductIds = topProductsRaw
@@ -249,7 +249,7 @@ export async function GET() {
         _sum: { total: "desc" },
       },
       take: 5,
-    }) as Array<{ customerId: string | null; _sum: { total: number | null } }>
+    }) as unknown as Array<{ customerId: string | null; _sum: { total: number | null } }>
 
     const topCustomerIds = topCustomersRaw
       .map((r) => r.customerId)
