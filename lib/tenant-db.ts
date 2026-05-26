@@ -20,7 +20,8 @@
 
 import { PrismaClient } from "@prisma/client"
 import { PrismaPg } from "@prisma/adapter-pg"
-import { Pool } from "pg"
+import { Pool as NeonPool } from "@neondatabase/serverless"
+import { Pool as PgPool } from "pg"
 
 // ---------------------------------------------------------------------------
 // Tipo del extended client
@@ -55,12 +56,28 @@ function createBaseClient(): PrismaClient {
   if (!connectionString) {
     throw new Error("DATABASE_URL no está definida en las variables de entorno.")
   }
-  const pool = new Pool({
-    connectionString,
-    max: process.env.NODE_ENV === "production" ? 1 : 10,
+
+  const isProduction = process.env.NODE_ENV === "production"
+
+  const pool = isProduction
+    ? new NeonPool({
+        connectionString,
+        max: 1,
+        connectionTimeoutMillis: 10000,
+      })
+    : new PgPool({
+        connectionString,
+        max: 10,
+      })
+
+  const adapter = new PrismaPg(pool as ConstructorParameters<typeof PrismaPg>[0])
+
+  return new PrismaClient({
+    adapter,
+    ...(isProduction && {
+      transactionOptions: { timeout: 10000, maxWait: 5000 },
+    }),
   })
-  const adapter = new PrismaPg(pool)
-  return new PrismaClient({ adapter })
 }
 
 /**

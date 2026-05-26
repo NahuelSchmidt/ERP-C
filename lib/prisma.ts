@@ -12,7 +12,8 @@
 
 import { PrismaClient } from "@prisma/client"
 import { PrismaPg } from "@prisma/adapter-pg"
-import { Pool } from "pg"
+import { Pool as NeonPool } from "@neondatabase/serverless"
+import { Pool as PgPool } from "pg"
 
 // ---------------------------------------------------------------------------
 // Declaración global para que TypeScript conozca la variable en el scope global
@@ -34,15 +35,30 @@ function createPrismaClient(): PrismaClient {
     )
   }
 
-  // En serverless (Vercel) cada instancia de función tiene su propio pool.
-  // max:1 evita agotar el límite de conexiones de Neon en prod.
-  const pool = new Pool({
-    connectionString,
-    max: process.env.NODE_ENV === "production" ? 1 : 10,
-  })
-  const adapter = new PrismaPg(pool)
+  const isProduction = process.env.NODE_ENV === "production"
 
-  return new PrismaClient({ adapter })
+  // En producción usamos el driver serverless de Neon (WebSocket/HTTP) para
+  // evitar timeouts de conexión TCP en entornos efímeros como Vercel.
+  // En desarrollo usamos pg estándar para mayor compatibilidad local.
+  const pool = isProduction
+    ? new NeonPool({
+        connectionString,
+        max: 1,
+        connectionTimeoutMillis: 10000,
+      })
+    : new PgPool({
+        connectionString,
+        max: 10,
+      })
+
+  const adapter = new PrismaPg(pool as ConstructorParameters<typeof PrismaPg>[0])
+
+  return new PrismaClient({
+    adapter,
+    ...(isProduction && {
+      transactionOptions: { timeout: 10000, maxWait: 5000 },
+    }),
+  })
 }
 
 // ---------------------------------------------------------------------------
