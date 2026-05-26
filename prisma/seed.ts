@@ -10,7 +10,8 @@
  *   Tenant:     demo
  */
 
-import "dotenv/config"
+import { config } from "dotenv"
+config({ path: ".env.local" })
 import { PrismaClient } from "@prisma/client"
 import { PrismaPg } from "@prisma/adapter-pg"
 import { Pool } from "pg"
@@ -277,6 +278,6 @@ async function main() {
 }
 
 main().catch((e) => {
-  console.error("\n❌  Error en seed:", e.message ?? e)
+  console.error(e)
   process.exit(1)
 })
