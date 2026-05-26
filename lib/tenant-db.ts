@@ -13,8 +13,6 @@
 
 import { PrismaClient } from "@prisma/client"
 import { PrismaPg } from "@prisma/adapter-pg"
-import { Pool as NeonPool } from "@neondatabase/serverless"
-import { Pool as PgPool } from "pg"
 
 function createBaseClient(dbSchema: string): PrismaClient {
   const connectionString = process.env.DATABASE_URL
@@ -22,33 +20,16 @@ function createBaseClient(dbSchema: string): PrismaClient {
     throw new Error("DATABASE_URL no está definida en las variables de entorno.")
   }
 
-  const isProduction = process.env.NODE_ENV === "production"
-
   // Inyectar search_path como startup parameter de PostgreSQL.
   // Esto aplica a todas las queries de la conexión sin necesidad de transacciones.
   const url = new URL(connectionString)
   url.searchParams.set("options", `-c search_path=${dbSchema},public`)
   const connectionStringWithSchema = url.toString()
 
-  const pool = isProduction
-    ? new NeonPool({
-        connectionString: connectionStringWithSchema,
-        max: 1,
-        connectionTimeoutMillis: 10000,
-      })
-    : new PgPool({
-        connectionString: connectionStringWithSchema,
-        max: 10,
-      })
+  // PrismaPg acepta string directamente — evita la ambigüedad del NeonPool cast.
+  const adapter = new PrismaPg(connectionStringWithSchema)
 
-  const adapter = new PrismaPg(pool as ConstructorParameters<typeof PrismaPg>[0])
-
-  return new PrismaClient({
-    adapter,
-    ...(isProduction && {
-      transactionOptions: { timeout: 10000, maxWait: 5000 },
-    }),
-  })
+  return new PrismaClient({ adapter })
 }
 
 /**
