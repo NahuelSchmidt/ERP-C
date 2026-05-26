@@ -32,6 +32,15 @@ const STATUS_COLORS: Record<InvoiceStatus, string> = {
 }
 
 export default async function DashboardPage() {
+  try {
+    return await renderDashboard()
+  } catch (err) {
+    console.error("[Dashboard] Error al renderizar:", err)
+    throw err
+  }
+}
+
+async function renderDashboard() {
   const [session, db, { tenantId }] = await Promise.all([
     auth(),
     getTenantDb(),
