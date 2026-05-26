@@ -27,6 +27,9 @@ declare global {
 // Factory del cliente Prisma para el schema "public"
 // ---------------------------------------------------------------------------
 function createPrismaClient(): PrismaClient {
+  // TEMP: diagnóstico de producción — remover una vez confirmado
+  console.log('[prisma] DB URL set:', !!process.env.DATABASE_URL, '| NODE_ENV:', process.env.NODE_ENV)
+
   const connectionString = process.env.DATABASE_URL
   if (!connectionString) {
     throw new Error(
