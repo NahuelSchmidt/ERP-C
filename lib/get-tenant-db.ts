@@ -1,6 +1,6 @@
 import { headers } from "next/headers"
 import { auth } from "@/lib/auth"
-import { createTenantClient } from "./tenant-db"
+import { applySearchPath, createTenantClient } from "./tenant-db"
 
 async function resolveTenantSchema(): Promise<string> {
   const headersList = await headers()
@@ -51,7 +51,9 @@ async function resolveTenantContext() {
 
 export async function getTenantDb() {
   const schema = await resolveTenantSchema()
-  return createTenantClient(schema)
+  const client = createTenantClient(schema)
+  await applySearchPath(client, schema)
+  return client
 }
 
 export async function getTenantContext() {
