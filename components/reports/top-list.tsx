@@ -31,11 +31,11 @@ export function TopList({
   const maxValue = items.length > 0 ? Math.max(...items.map((i) => i.value)) : 1
 
   return (
-    <div className={cn("bg-white rounded-xl border border-gray-200 p-5", className)}>
-      <h3 className="text-sm font-semibold text-gray-700 mb-4">{title}</h3>
+    <div className={cn("bg-card rounded-2xl border border-border p-5", className)}>
+      <h3 className="text-sm font-bold text-foreground mb-4">{title}</h3>
 
       {items.length === 0 ? (
-        <p className="text-sm text-gray-400 text-center py-6">{emptyMessage}</p>
+        <p className="text-sm text-muted-foreground text-center py-6">{emptyMessage}</p>
       ) : (
         <ul className="space-y-3">
           {items.map((item, index) => {
@@ -44,24 +44,23 @@ export function TopList({
               <li key={index}>
                 <div className="flex items-center justify-between mb-1 gap-2">
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-xs font-semibold text-gray-400 w-5 flex-shrink-0">
+                    <span className="text-xs font-bold text-muted-foreground w-5 flex-shrink-0">
                       {index + 1}
                     </span>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-gray-800 truncate">{item.name}</p>
+                      <p className="text-sm font-medium text-foreground truncate">{item.name}</p>
                       {item.subtitle && (
-                        <p className="text-xs text-gray-400 truncate">{item.subtitle}</p>
+                        <p className="text-xs text-muted-foreground truncate">{item.subtitle}</p>
                       )}
                     </div>
                   </div>
-                  <span className="text-sm font-semibold text-gray-900 flex-shrink-0">
+                  <span className="text-sm font-semibold text-foreground flex-shrink-0">
                     {formatValue(item.value)}
                   </span>
                 </div>
-                {/* Barra de progreso */}
-                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-blue-500 rounded-full transition-all duration-500"
+                    className="h-full bg-foreground rounded-full transition-all duration-500"
                     style={{ width: `${percent}%` }}
                   />
                 </div>

@@ -100,21 +100,28 @@ export function SupplierTable({ initialData, initialMeta }: SupplierTableProps) 
     columnHelper.accessor(getDisplayName, {
       id: "name",
       header: "Nombre / Razón social",
-      cell: ({ row }) => (
-        <div>
-          <p className="font-medium text-gray-900 text-sm">
-            {getDisplayName(row.original)}
-          </p>
-          {row.original.paymentCondition && (
-            <p className="text-xs text-gray-400">{row.original.paymentCondition.name}</p>
-          )}
-        </div>
-      ),
+      cell: ({ row }) => {
+        const name = getDisplayName(row.original)
+        const initials = name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase()
+        return (
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-secondary flex items-center justify-center flex-shrink-0">
+              <span className="text-[11px] font-bold text-foreground">{initials}</span>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-foreground">{name}</p>
+              {row.original.paymentCondition && (
+                <p className="text-xs text-muted-foreground">{row.original.paymentCondition.name}</p>
+              )}
+            </div>
+          </div>
+        )
+      },
     }),
     columnHelper.accessor("documentNumber", {
       header: "CUIT / DNI",
       cell: ({ getValue }) => (
-        <span className="font-mono text-sm">{getValue() ?? "-"}</span>
+        <span className="font-mono text-sm text-foreground">{getValue() ?? "-"}</span>
       ),
     }),
     columnHelper.accessor("vatCondition", {
@@ -122,7 +129,7 @@ export function SupplierTable({ initialData, initialMeta }: SupplierTableProps) 
       cell: ({ getValue }) => {
         const val = getValue()
         return (
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-muted-foreground">
             {VAT_CONDITION_LABELS[val as keyof typeof VAT_CONDITION_LABELS] ?? val}
           </span>
         )
@@ -134,26 +141,20 @@ export function SupplierTable({ initialData, initialMeta }: SupplierTableProps) 
         id: "paymentCondition",
         header: "Condición de pago",
         cell: ({ getValue }) => (
-          <span className="text-sm text-gray-600">{getValue()}</span>
+          <span className="text-sm text-muted-foreground">{getValue()}</span>
         ),
       }
     ),
     columnHelper.accessor("phone", {
       header: "Teléfono",
-      cell: ({ getValue }) => <span className="text-sm">{getValue() ?? "-"}</span>,
+      cell: ({ getValue }) => <span className="text-sm text-muted-foreground">{getValue() ?? "-"}</span>,
     }),
     columnHelper.accessor("isActive", {
       header: "Estado",
       cell: ({ getValue }) => (
-        <span
-          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-            getValue()
-              ? "bg-green-50 text-green-700"
-              : "bg-gray-100 text-gray-500"
-          }`}
-        >
-          {getValue() ? "Activo" : "Inactivo"}
-        </span>
+        getValue()
+          ? <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">Activo</span>
+          : <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-secondary text-muted-foreground">Inactivo</span>
       ),
     }),
     columnHelper.display({
@@ -219,21 +220,21 @@ export function SupplierTable({ initialData, initialMeta }: SupplierTableProps) 
         </Button>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="bg-card rounded-2xl border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-muted/50 border-b border-border">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
                     <th
                       key={header.id}
-                      className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide"
+                      className="px-4 py-3 text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider"
                     >
                       {header.isPlaceholder ? null : (
                         <button
                           className={`flex items-center gap-1 ${
-                            header.column.getCanSort() ? "cursor-pointer hover:text-gray-700" : ""
+                            header.column.getCanSort() ? "cursor-pointer hover:text-foreground" : ""
                           }`}
                           onClick={header.column.getToggleSortingHandler()}
                         >
@@ -251,10 +252,10 @@ export function SupplierTable({ initialData, initialMeta }: SupplierTableProps) 
                 </tr>
               ))}
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody>
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i}>
+                  <tr key={i} className="border-b border-border/60">
                     {columns.map((_, j) => (
                       <td key={j} className="px-4 py-3">
                         <Skeleton className="h-4 w-full" />
@@ -266,7 +267,7 @@ export function SupplierTable({ initialData, initialMeta }: SupplierTableProps) 
                 <tr>
                   <td
                     colSpan={columns.length}
-                    className="px-4 py-12 text-center text-gray-400"
+                    className="px-4 py-12 text-center text-muted-foreground"
                   >
                     No se encontraron proveedores
                   </td>
@@ -275,7 +276,7 @@ export function SupplierTable({ initialData, initialMeta }: SupplierTableProps) 
                 table.getRowModel().rows.map((row) => (
                   <tr
                     key={row.id}
-                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                    className="hover:bg-muted/30 transition-colors cursor-pointer border-b border-border/60 last:border-0"
                     onClick={() => router.push(`/proveedores/${row.original.id}`)}
                   >
                     {row.getVisibleCells().map((cell) => (
@@ -298,8 +299,8 @@ export function SupplierTable({ initialData, initialMeta }: SupplierTableProps) 
           </table>
         </div>
 
-        <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50">
-          <p className="text-xs text-gray-500">
+        <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/20">
+          <p className="text-xs text-muted-foreground">
             {meta.total} resultado{meta.total !== 1 ? "s" : ""} •{" "}
             Página {page} de {meta.totalPages}
           </p>

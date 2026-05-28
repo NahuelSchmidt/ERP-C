@@ -38,8 +38,8 @@ export default async function ClientesPage() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Clientes</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h1 className="text-2xl font-black tracking-tight text-foreground">Clientes</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             {total} cliente{total !== 1 ? "s" : ""} registrado{total !== 1 ? "s" : ""}
           </p>
         </div>

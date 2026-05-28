@@ -15,11 +15,11 @@ interface InvoiceStatusBadgeProps {
 }
 
 const STATUS_STYLES: Record<InvoiceStatus, string> = {
-  DRAFT: "bg-gray-100 text-gray-700 ring-gray-200",
-  ISSUED: "bg-blue-50 text-blue-700 ring-blue-200",
-  CANCELLED: "bg-red-50 text-red-700 ring-red-200",
-  PAID: "bg-green-50 text-green-700 ring-green-200",
-  PARTIAL: "bg-amber-50 text-amber-700 ring-amber-200",
+  DRAFT: "bg-secondary text-muted-foreground ring-border",
+  ISSUED: "bg-blue-50 text-blue-700 ring-blue-100",
+  CANCELLED: "bg-red-50 text-red-600 ring-red-100",
+  PAID: "bg-emerald-50 text-emerald-700 ring-emerald-100",
+  PARTIAL: "bg-amber-50 text-amber-700 ring-amber-100",
 }
 
 export function InvoiceStatusBadge({ status, className }: InvoiceStatusBadgeProps) {

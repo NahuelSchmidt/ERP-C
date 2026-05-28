@@ -34,11 +34,11 @@ function formatDate(date: string): string {
 }
 
 const StatusColors: Record<string, string> = {
-  DRAFT: "bg-gray-100 text-gray-500",
-  ISSUED: "bg-blue-50 text-blue-700",
-  PAID: "bg-green-50 text-green-700",
-  PARTIAL: "bg-amber-50 text-amber-700",
-  CANCELLED: "bg-red-50 text-red-600",
+  DRAFT: "bg-secondary text-muted-foreground",
+  ISSUED: "bg-blue-50 text-blue-700 border border-blue-100",
+  PAID: "bg-emerald-50 text-emerald-700 border border-emerald-100",
+  PARTIAL: "bg-amber-50 text-amber-700 border border-amber-100",
+  CANCELLED: "bg-red-50 text-red-600 border border-red-100",
 }
 
 export default function ReportesPage() {
@@ -63,13 +63,13 @@ export default function ReportesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Reportes</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Dashboard de métricas del negocio</p>
+        <h1 className="text-2xl font-black tracking-tight text-foreground">Reportes</h1>
+        <p className="text-sm text-muted-foreground mt-1">Dashboard de métricas del negocio</p>
       </div>
 
       {/* KPIs fila 1 — Ventas */}
       <div>
-        <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Ventas</h2>
+        <h2 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3">Ventas</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {isLoading ? (
             Array.from({ length: 3 }).map((_, i) => <KpiCardSkeleton key={i} />)
@@ -113,7 +113,7 @@ export default function ReportesPage() {
 
       {/* KPIs fila 2 — Cuentas y alertas */}
       <div>
-        <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Posición financiera</h2>
+        <h2 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3">Posición financiera</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {isLoading ? (
             Array.from({ length: 3 }).map((_, i) => <KpiCardSkeleton key={i} />)
@@ -161,10 +161,10 @@ export default function ReportesPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Top productos */}
         {isLoading ? (
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <div className="h-4 w-32 bg-gray-200 rounded animate-pulse mb-4" />
+          <div className="bg-card rounded-2xl border border-border p-5">
+            <div className="h-4 w-32 bg-muted rounded animate-pulse mb-4" />
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-8 bg-gray-100 rounded animate-pulse mb-2" />
+              <div key={i} className="h-8 bg-muted/60 rounded animate-pulse mb-2" />
             ))}
           </div>
         ) : (
@@ -181,10 +181,10 @@ export default function ReportesPage() {
 
         {/* Top clientes */}
         {isLoading ? (
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <div className="h-4 w-32 bg-gray-200 rounded animate-pulse mb-4" />
+          <div className="bg-card rounded-2xl border border-border p-5">
+            <div className="h-4 w-32 bg-muted rounded animate-pulse mb-4" />
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-8 bg-gray-100 rounded animate-pulse mb-2" />
+              <div key={i} className="h-8 bg-muted/60 rounded animate-pulse mb-2" />
             ))}
           </div>
         ) : (
@@ -199,40 +199,40 @@ export default function ReportesPage() {
         )}
 
         {/* Facturas recientes */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100">
-            <h3 className="text-sm font-semibold text-gray-700">Facturas recientes</h3>
+        <div className="bg-card rounded-2xl border border-border overflow-hidden">
+          <div className="px-5 py-4 border-b border-border">
+            <h3 className="text-sm font-bold text-foreground">Facturas recientes</h3>
           </div>
           {isLoading ? (
-            <div className="divide-y divide-gray-100">
+            <div>
               {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="px-5 py-3">
-                  <div className="h-4 bg-gray-100 rounded animate-pulse" />
+                <div key={i} className="px-5 py-3 border-b border-border/60">
+                  <div className="h-4 bg-muted rounded animate-pulse" />
                 </div>
               ))}
             </div>
           ) : !data?.recentInvoices.length ? (
-            <p className="text-sm text-gray-400 text-center py-8">Sin facturas recientes</p>
+            <p className="text-sm text-muted-foreground text-center py-8">Sin facturas recientes</p>
           ) : (
-            <ul className="divide-y divide-gray-100">
+            <ul>
               {data.recentInvoices.map((inv) => (
-                <li key={inv.id}>
+                <li key={inv.id} className="border-b border-border/60 last:border-0">
                   <Link
                     href={`/facturacion/${inv.id}`}
-                    className="flex items-center justify-between px-5 py-3 hover:bg-gray-50 transition-colors"
+                    className="flex items-center justify-between px-5 py-3 hover:bg-muted/30 transition-colors"
                   >
                     <div className="min-w-0">
-                      <p className="text-xs font-mono text-gray-600">{inv.fullNumber}</p>
-                      <p className="text-sm text-gray-900 truncate">{inv.customerName}</p>
-                      <p className="text-xs text-gray-400">{formatDate(inv.date)}</p>
+                      <p className="text-xs font-mono text-muted-foreground">{inv.fullNumber}</p>
+                      <p className="text-sm font-medium text-foreground truncate">{inv.customerName}</p>
+                      <p className="text-xs text-muted-foreground">{formatDate(inv.date)}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1 ml-3 flex-shrink-0">
-                      <p className="text-sm font-mono font-semibold text-gray-900">
+                      <p className="text-sm font-mono font-semibold text-foreground">
                         {formatCurrency(inv.total)}
                       </p>
                       <span
-                        className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${
-                          StatusColors[inv.status] ?? "bg-gray-100 text-gray-500"
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
+                          StatusColors[inv.status] ?? "bg-secondary text-muted-foreground"
                         }`}
                       >
                         {INVOICE_STATUS_LABELS[inv.status as InvoiceStatus] ?? inv.status}
@@ -248,31 +248,31 @@ export default function ReportesPage() {
 
       {/* Productos bajo stock */}
       {!isLoading && data && data.lowStockProducts.count > 0 && (
-        <div className="bg-white rounded-xl border border-red-200 overflow-hidden">
+        <div className="bg-card rounded-2xl border border-red-200 overflow-hidden">
           <div className="px-5 py-4 border-b border-red-100 bg-red-50">
-            <h3 className="text-sm font-semibold text-red-700">
+            <h3 className="text-sm font-bold text-red-700">
               Alertas de stock ({data.lowStockProducts.count})
             </h3>
           </div>
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-100">
+            <thead className="bg-muted/50 border-b border-border">
               <tr>
-                <th className="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase">Producto</th>
-                <th className="text-right px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase">Stock actual</th>
-                <th className="text-right px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase">Mínimo</th>
+                <th className="text-left px-5 py-2.5 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Producto</th>
+                <th className="text-right px-5 py-2.5 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Stock actual</th>
+                <th className="text-right px-5 py-2.5 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Mínimo</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody>
               {data.lowStockProducts.items.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-50">
+                <tr key={item.id} className="hover:bg-muted/30 transition-colors border-b border-border/60 last:border-0">
                   <td className="px-5 py-3">
-                    <Link href={`/productos/${item.id}`} className="font-medium text-gray-900 hover:text-blue-600">
+                    <Link href={`/productos/${item.id}`} className="font-medium text-foreground hover:text-foreground/70">
                       {item.name}
                     </Link>
-                    {item.code && <p className="text-xs text-gray-400 font-mono">{item.code}</p>}
+                    {item.code && <p className="text-xs text-muted-foreground font-mono">{item.code}</p>}
                   </td>
                   <td className="px-5 py-3 text-right font-mono text-red-600 font-medium">{item.stock}</td>
-                  <td className="px-5 py-3 text-right font-mono text-gray-500">{item.minStock}</td>
+                  <td className="px-5 py-3 text-right font-mono text-muted-foreground">{item.minStock}</td>
                 </tr>
               ))}
             </tbody>

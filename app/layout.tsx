@@ -13,8 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ERP",
-  description: "Sistema de gestión empresarial",
+  title: "ERP PYMES — Sistema de gestión para tu negocio",
+  description:
+    "Facturación, stock, compras y caja en un solo lugar. ERP para ferreterías, distribuidoras y comercios argentinos.",
 };
 
 export default function RootLayout({

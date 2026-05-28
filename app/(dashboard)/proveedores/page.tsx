@@ -38,8 +38,8 @@ export default async function ProveedoresPage() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Proveedores</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h1 className="text-2xl font-black tracking-tight text-foreground">Proveedores</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             {total} proveedor{total !== 1 ? "es" : ""} registrado{total !== 1 ? "s" : ""}
           </p>
         </div>

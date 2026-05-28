@@ -24,11 +24,11 @@ const STATUS_LABELS: Record<InvoiceStatus, string> = {
 }
 
 const STATUS_COLORS: Record<InvoiceStatus, string> = {
-  DRAFT: "bg-gray-100 text-gray-600",
-  ISSUED: "bg-blue-50 text-blue-700",
-  PAID: "bg-green-50 text-green-700",
-  PARTIAL: "bg-amber-50 text-amber-700",
-  CANCELLED: "bg-red-50 text-red-600",
+  DRAFT: "bg-secondary text-muted-foreground",
+  ISSUED: "bg-blue-50 text-blue-700 border border-blue-100",
+  PAID: "bg-emerald-50 text-emerald-700 border border-emerald-100",
+  PARTIAL: "bg-amber-50 text-amber-700 border border-amber-100",
+  CANCELLED: "bg-red-50 text-red-600 border border-red-100",
 }
 
 export default async function DashboardPage() {
@@ -140,10 +140,10 @@ async function renderDashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-1">
+        <h1 className="text-2xl font-black tracking-tight text-foreground">Dashboard</h1>
+        <p className="text-sm text-muted-foreground mt-1">
           Bienvenido,{" "}
-          <span className="font-medium text-gray-700">{session?.user.name}</span>
+          <span className="font-medium text-foreground">{session?.user.name}</span>
         </p>
       </div>
 
@@ -152,44 +152,44 @@ async function renderDashboard() {
           <Link
             key={kpi.label}
             href={kpi.href}
-            className="bg-white rounded-xl border border-gray-200 p-5 hover:border-gray-300 hover:shadow-sm transition-all"
+            className="bg-card rounded-2xl border border-border p-5 hover:shadow-sm transition-all"
           >
-            <p className="text-sm text-gray-500">{kpi.label}</p>
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{kpi.label}</p>
             {kpi.value ? (
-              <p className={`text-2xl font-bold mt-1 ${kpi.color}`}>{kpi.value}</p>
+              <p className={`text-3xl font-black tracking-tight mt-2 ${kpi.color}`}>{kpi.value}</p>
             ) : (
-              <p className="text-2xl font-bold text-gray-300 mt-1">—</p>
+              <p className="text-3xl font-black tracking-tight text-muted-foreground/30 mt-2">—</p>
             )}
-            <p className="text-xs text-gray-400 mt-1">{kpi.sub}</p>
+            <p className="text-xs text-muted-foreground mt-1">{kpi.sub}</p>
           </Link>
         ))}
       </div>
 
       {recentInvoices.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-            <h2 className="text-sm font-semibold text-gray-900">Últimos comprobantes</h2>
-            <Link href="/facturacion" className="text-xs text-blue-600 hover:underline">
+        <div className="bg-card rounded-2xl border border-border overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+            <h2 className="text-sm font-bold text-foreground">Últimos comprobantes</h2>
+            <Link href="/facturacion" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
               Ver todos
             </Link>
           </div>
-          <div className="divide-y divide-gray-50">
+          <div>
             {recentInvoices.map((inv) => (
               <Link
                 key={inv.id}
                 href={`/facturacion/${inv.id}`}
-                className="flex items-center justify-between px-5 py-3 hover:bg-gray-50 transition-colors"
+                className="flex items-center justify-between px-5 py-3 hover:bg-muted/30 transition-colors border-b border-border/60 last:border-0"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <span className="font-mono text-xs text-gray-500 shrink-0">{inv.fullNumber}</span>
-                  <span className="text-sm text-gray-900 truncate">{inv.customerName}</span>
+                  <span className="font-mono text-xs text-muted-foreground shrink-0">{inv.fullNumber}</span>
+                  <span className="text-sm text-foreground truncate">{inv.customerName}</span>
                 </div>
                 <div className="flex items-center gap-3 shrink-0 ml-4">
-                  <span className="text-xs text-gray-400">{fmtDate(inv.date)}</span>
-                  <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[inv.status]}`}>
+                  <span className="text-xs text-muted-foreground">{fmtDate(inv.date)}</span>
+                  <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold ${STATUS_COLORS[inv.status]}`}>
                     {STATUS_LABELS[inv.status]}
                   </span>
-                  <span className="text-sm font-mono font-medium text-gray-900">{fmt(inv.total)}</span>
+                  <span className="text-sm font-mono font-medium text-foreground">{fmt(inv.total)}</span>
                 </div>
               </Link>
             ))}

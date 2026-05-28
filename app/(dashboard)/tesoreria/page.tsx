@@ -106,14 +106,14 @@ export default function TesoreriaPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Tesorería</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Cajas y pagos</p>
+        <h1 className="text-2xl font-black tracking-tight text-foreground">Tesorería</h1>
+        <p className="text-sm text-muted-foreground mt-1">Cajas y pagos</p>
       </div>
 
       {/* Cajas */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold text-gray-900">Cajas registradoras</h2>
+          <h2 className="text-base font-bold text-foreground">Cajas registradoras</h2>
           <Link href="/configuracion" className={buttonVariants({ variant: "outline", size: "sm" })}>
             Configurar
           </Link>
@@ -126,7 +126,7 @@ export default function TesoreriaPage() {
             ))}
           </div>
         ) : registers.length === 0 ? (
-          <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-400">
+          <div className="bg-card rounded-2xl border border-border p-8 text-center text-muted-foreground">
             <p className="text-sm">No hay cajas configuradas</p>
           </div>
         ) : (
@@ -134,30 +134,30 @@ export default function TesoreriaPage() {
             {registers.map((reg) => (
               <div
                 key={reg.id}
-                className={`bg-white rounded-xl border p-5 ${
-                  reg.currentSession ? "border-green-200" : "border-gray-200"
+                className={`bg-card rounded-2xl border p-5 hover:shadow-sm transition-all ${
+                  reg.currentSession ? "border-emerald-200" : "border-border"
                 }`}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div>
-                    <p className="font-semibold text-gray-900 text-sm">{reg.name}</p>
+                    <p className="font-semibold text-foreground text-sm">{reg.name}</p>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <div
                         className={`w-2 h-2 rounded-full ${
-                          reg.currentSession ? "bg-green-500" : "bg-gray-300"
+                          reg.currentSession ? "bg-emerald-500" : "bg-muted-foreground/30"
                         }`}
                       />
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         {reg.currentSession ? "Sesión abierta" : "Sin sesión activa"}
                       </p>
                     </div>
                   </div>
                 </div>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-3xl font-black tracking-tight text-foreground">
                   {formatCurrency(reg.currentBalance)}
                 </p>
                 {reg.currentSession && (
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     Abierta: {formatDate(reg.currentSession.openedAt)}
                   </p>
                 )}
@@ -187,60 +187,60 @@ export default function TesoreriaPage() {
       {/* Últimos pagos */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold text-gray-900">Últimos movimientos</h2>
+          <h2 className="text-base font-bold text-foreground">Últimos movimientos</h2>
           <Link href="/tesoreria/pagos/nuevo" className={buttonVariants({ variant: "outline", size: "sm" })}>
             Nuevo pago
           </Link>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="bg-card rounded-2xl border border-border overflow-hidden">
           {isLoading ? (
-            <div className="divide-y divide-gray-100">
+            <div>
               {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="px-4 py-3">
+                <div key={i} className="px-4 py-3 border-b border-border/60">
                   <Skeleton className="h-4 w-full" />
                 </div>
               ))}
             </div>
           ) : payments.length === 0 ? (
-            <div className="py-12 text-center text-gray-400 text-sm">
+            <div className="py-12 text-center text-muted-foreground text-sm">
               Sin movimientos registrados
             </div>
           ) : (
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-muted/50 border-b border-border">
                 <tr>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Fecha</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Tipo</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Cliente / Ref.</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Monto</th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Estado</th>
+                  <th className="text-left px-4 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Fecha</th>
+                  <th className="text-left px-4 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Tipo</th>
+                  <th className="text-left px-4 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Cliente / Ref.</th>
+                  <th className="text-right px-4 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Monto</th>
+                  <th className="text-center px-4 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Estado</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody>
                 {payments.map((pay) => (
-                  <tr key={pay.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-gray-500 text-xs">{formatDate(pay.date)}</td>
-                    <td className="px-4 py-3 text-gray-700">
+                  <tr key={pay.id} className="hover:bg-muted/30 transition-colors border-b border-border/60 last:border-0">
+                    <td className="px-4 py-3 text-muted-foreground text-xs">{formatDate(pay.date)}</td>
+                    <td className="px-4 py-3 text-sm font-medium text-foreground">
                       {DIRECTION_LABELS[pay.direction] ?? pay.direction}
                     </td>
-                    <td className="px-4 py-3 text-gray-700">
+                    <td className="px-4 py-3 text-sm text-foreground">
                       {getPayeeName(pay)}
                       {pay.reference && (
-                        <span className="ml-1 text-gray-400 text-xs">· {pay.reference}</span>
+                        <span className="ml-1 text-muted-foreground text-xs">· {pay.reference}</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right font-mono font-medium text-gray-900">
+                    <td className="px-4 py-3 text-right font-mono font-medium text-foreground">
                       {formatCurrency(pay.total)}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                           pay.status === "CONFIRMED"
-                            ? "bg-green-50 text-green-700"
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
                             : pay.status === "CANCELLED"
-                            ? "bg-red-50 text-red-600"
-                            : "bg-amber-50 text-amber-700"
+                            ? "bg-red-50 text-red-600 border border-red-100"
+                            : "bg-amber-50 text-amber-700 border border-amber-100"
                         }`}
                       >
                         {STATUS_LABELS[pay.status] ?? pay.status}

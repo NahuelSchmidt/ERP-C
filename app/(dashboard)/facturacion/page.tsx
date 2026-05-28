@@ -129,9 +129,9 @@ function FacturacionContent() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Facturación</h1>
+          <h1 className="text-2xl font-black tracking-tight text-foreground">Facturación</h1>
           {!isLoading && (
-            <p className="text-sm text-gray-500 mt-0.5">
+            <p className="text-sm text-muted-foreground mt-1">
               {meta.total} comprobante{meta.total !== 1 ? "s" : ""}
               {customerId && " (filtrado por cliente)"}
             </p>
@@ -159,7 +159,7 @@ function FacturacionContent() {
         <select
           value={status}
           onChange={(e) => handleStatusChange(e.target.value)}
-          className="h-8 rounded-lg border border-input bg-white px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
+          className="h-8 rounded-xl border border-input bg-background px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
         >
           {STATUS_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>{o.label}</option>
@@ -173,23 +173,23 @@ function FacturacionContent() {
       </div>
 
       {/* Tabla */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="bg-card rounded-2xl border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-muted/50 border-b border-border">
               <tr>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">N° Comprobante</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Tipo</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Cliente</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Fecha</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Total</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Estado</th>
+                <th className="text-left px-4 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">N° Comprobante</th>
+                <th className="text-left px-4 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Tipo</th>
+                <th className="text-left px-4 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Cliente</th>
+                <th className="text-left px-4 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Fecha</th>
+                <th className="text-right px-4 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Total</th>
+                <th className="text-center px-4 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Estado</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody>
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i}>
+                  <tr key={i} className="border-b border-border/60">
                     {Array.from({ length: 6 }).map((_, j) => (
                       <td key={j} className="px-4 py-3">
                         <Skeleton className="h-4 w-full" />
@@ -199,7 +199,7 @@ function FacturacionContent() {
                 ))
               ) : invoices.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-gray-400">
+                  <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">
                     No se encontraron comprobantes
                   </td>
                 </tr>
@@ -207,22 +207,22 @@ function FacturacionContent() {
                 invoices.map((inv) => (
                   <tr
                     key={inv.id}
-                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                    className="hover:bg-muted/30 transition-colors cursor-pointer border-b border-border/60 last:border-0"
                     onClick={() => window.location.href = `/facturacion/${inv.id}`}
                   >
-                    <td className="px-4 py-3 font-mono text-sm font-medium text-gray-900">
+                    <td className="px-4 py-3 font-mono text-sm font-medium text-foreground">
                       {inv.fullNumber}
                     </td>
-                    <td className="px-4 py-3 text-gray-600 text-xs">
+                    <td className="px-4 py-3 text-muted-foreground text-xs">
                       {VOUCHER_TYPE_LABELS[inv.voucherType] ?? inv.voucherType}
                     </td>
-                    <td className="px-4 py-3 text-gray-900">
+                    <td className="px-4 py-3 text-sm font-medium text-foreground">
                       {getCustomerName(inv)}
                     </td>
-                    <td className="px-4 py-3 text-gray-500">
+                    <td className="px-4 py-3 text-muted-foreground">
                       {formatDate(inv.date)}
                     </td>
-                    <td className="px-4 py-3 text-right font-mono font-medium text-gray-900">
+                    <td className="px-4 py-3 text-right font-mono font-medium text-foreground">
                       {formatCurrency(inv.total)}
                     </td>
                     <td className="px-4 py-3 text-center">
@@ -236,8 +236,8 @@ function FacturacionContent() {
         </div>
 
         {/* Paginación */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50">
-          <p className="text-xs text-gray-500">
+        <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/20">
+          <p className="text-xs text-muted-foreground">
             {meta.total} resultado{meta.total !== 1 ? "s" : ""} · Página {page} de {meta.totalPages}
           </p>
           <div className="flex items-center gap-1">
